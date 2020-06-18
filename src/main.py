@@ -41,14 +41,12 @@ def mark_pixels(event, x, y, flags, param):
 def distance(p0, p1):
 	return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
 
-def make_graph(I, SP_list, hist_ob, hist_bg):
+def make_graph(I, SP_list):
 	G = nx.Graph()
 	s = SPNode()
 	s.label = 's'
 	t = SPNode()
 	t.label = 't'
-	hist_ob_sum = int(hist_ob.sum())
-	hist_bg_sum = int(hist_bg.sum())
 
 	for u in SP_list:
 		K = 0
@@ -60,18 +58,8 @@ def make_graph(I, SP_list, hist_ob, hist_bg):
 					K += sim
 					G.add_edge(u, v, sim = sim)
 		if u.type == 'na':
-			l_, a_, b_ = [int(x) for x in u.mean_lab]
-			l_i = int(l_//((l_range[1]-l_range[0])/lab_bins[0]))
-			a_i = int(a_//((a_range[1]-a_range[0])/lab_bins[1]))
-			b_i = int(b_//((b_range[1]-b_range[0])/lab_bins[2]))
-			pr_ob = int(hist_ob[l_i, a_i, b_i])/hist_ob_sum
-			pr_bg = int(hist_bg[l_i, a_i, b_i])/hist_bg_sum
-			if pr_bg > 0:
-				sim_s = 0.9*-np.log(pr_bg)
-			if pr_ob > 0:
-				sim_t = 0.9*-np.log(pr_ob)
-			G.add_edge(s, u, sim = 100000)
-			G.add_edge(t, u, sim = 100000)
+			G.add_edge(s, u, sim = 1000000)
+			G.add_edge(t, u, sim = 1000000)
 		if(u.type == 'ob'):
 			G.add_edge(s, u, sim = K+1)
 			G.add_edge(t, u, sim = 0)
@@ -148,17 +136,8 @@ for x, y in marked_ob_pixels:
 	SP_list[SP_labels[x][y]].type = "ob"
 for x, y in marked_bg_pixels:
 	SP_list[SP_labels[x][y]].type = "bg"
-mask_ob = np.zeros((h, w), dtype = np.uint8)
-for x, y in marked_ob_pixels:
-	mask_ob[x][y] = 255
-mask_bg = np.zeros((h, w), dtype = np.uint8)
-for x, y in marked_bg_pixels:
-	mask_bg[x][y] = 255
 
-hist_ob = cv2.calcHist([I_lab], [0, 1, 2], mask_ob, lab_bins, l_range + a_range + b_range)
-hist_bg = cv2.calcHist([I_lab], [0, 1, 2], mask_bg, lab_bins, l_range + a_range + b_range)
-G = make_graph(I_lab, SP_list, hist_ob, hist_bg)
-
+G = make_graph(I_lab, SP_list)
 for node in G.nodes():
 	if node.label == 's':
 		s=node
