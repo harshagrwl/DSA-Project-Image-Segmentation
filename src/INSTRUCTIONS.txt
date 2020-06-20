@@ -1,2 +1,2 @@
-1. pip install matplotlib networkx numpy opencv-python
+1. pip install matplotlib networkx numpy opencv-contrib-python
 2. python/python3 main.py
